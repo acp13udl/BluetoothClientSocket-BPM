@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">BPM-BluetoothClient</string>
+    <string name="action_settings">Opciones</string>
+
+    <string name="devicechoose">Escoge el tensiómetro</string>
+    <string name="systolicpressure">Systolic pressure</string>
+    <string name="diastolicpressure">Diastolic pressure</string>
+    <string name="pulse">Pulse</string>
+</resources>

@@ -1,0 +1,41 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/showxmlresult"
+        android:layout_width="match_parent"
+        android:textSize="20sp"
+        android:layout_marginTop="10dp"
+        android:layout_height="wrap_content" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:hint="@string/systolicpressure"
+        android:layout_marginBottom="5dp"
+        android:ems="12"/>
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:hint="@string/diastolicpressure"
+        android:layout_marginBottom="5dp"
+        android:ems="12"/>
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:hint="@string/pulse"
+        android:layout_marginBottom="5dp"
+        android:ems="12"/>
+
+    <Button
+        android:id="@+id/button"
+        android:layout_marginTop="15dp"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:text="SEND"/>
+
+
+</LinearLayout>
