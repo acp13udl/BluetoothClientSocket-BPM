@@ -6,4 +6,6 @@
     <string name="systolicpressure">Systolic pressure</string>
     <string name="diastolicpressure">Diastolic pressure</string>
     <string name="pulse">Pulse</string>
+    <string name="mandatoryfuields">Todos los campos son obligatorios</string>
+    <string name="process">Procesando y enviando medición</string>
 </resources>

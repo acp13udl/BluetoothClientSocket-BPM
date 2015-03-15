@@ -2,6 +2,7 @@ package com.bpcontrol.project.bpm_bluetoothclient;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
@@ -11,10 +12,15 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -40,6 +46,12 @@ public class BluetoothClient extends Activity {
     private ConnectThread connectThread;
     private ConnectedThread connectedThread;
 
+    private EditText text1,text2,text3;
+    private TextView textView;
+    private Handler handler;
+    private String writeXML;
+    private ProgressDialog dialog;
+
 
     private final BroadcastReceiver searchDevicesReceiver = new BroadcastReceiver() {
 
@@ -57,6 +69,8 @@ public class BluetoothClient extends Activity {
                 adapterdialog.notifyDataSetChanged();
                 devicesfound.add(device);
             }
+
+
         }
     };
 
@@ -68,27 +82,53 @@ public class BluetoothClient extends Activity {
         setContentView(R.layout.activity_bluetooth_client);
         Button send = (Button) findViewById(R.id.button);
         devicesfound = new ArrayList<BluetoothDevice>();
+
+        text1 = (EditText) findViewById(R.id.text1);
+        text2 = (EditText) findViewById(R.id.text2);
+        text3 = (EditText) findViewById(R.id.text3);
+
+        textView = (TextView) findViewById(R.id.showxmlresult);
+
+        dialog = new ProgressDialog(this);
+        dialog.setMessage(getResources().getString(R.string.process));
+
         send.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
 
-                badapter = (BluetoothAdapter)BluetoothAdapter.getDefaultAdapter();
-                if (!badapter.isEnabled()) {
-                    Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                    startActivityForResult(enableIntent,REQUESTCODE_BLUETOOTH_ENABLE);
-                } else {
-                    searchDevices();
+                if (text1.getText().toString().equals("") || text2.getText().toString().equals("")
+                        || text3.getText().toString().equals("")) {
+
+                    Toast.makeText(BluetoothClient.this,getResources().getString(R.string.mandatoryfuields),Toast.LENGTH_LONG).show();
+                }else {
+
+                    badapter = (BluetoothAdapter) BluetoothAdapter.getDefaultAdapter();
+                    XMLMeasurementCreator creator = new XMLMeasurementCreator(text1.getText().toString(),
+                            text2.getText().toString(),text3.getText().toString());
+                    writeXML = creator.createXML();
+                    if (!badapter.isEnabled()) {
+                        Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                        startActivityForResult(enableIntent, REQUESTCODE_BLUETOOTH_ENABLE);
+                    } else {
+                        searchDevices();
+                    }
+
                 }
             }
         });
 
+        handler = new Handler() {
 
-    }
+            @Override
+            public void handleMessage(Message msg) {
 
-    @Override
-    public void onStart(){
-        super.onStart();
+                String xml = (String) msg.obj;
+                textView.setText(xml);
+
+
+            }
+        };
 
         IntentFilter filtersearch = new IntentFilter();
 
@@ -98,21 +138,36 @@ public class BluetoothClient extends Activity {
 
         registerReceiver(searchDevicesReceiver, filtersearch);
 
+
     }
 
     @Override
-    public void onStop(){
-         super.onStop();
+    public void onStart(){
+        super.onStart();
 
-         connectedThread.cancel();
-         connectThread.cancel();
-         if (searchDevicesReceiver!=null) unregisterReceiver(searchDevicesReceiver);
     }
 
     @Override
     public void onDestroy(){
-        super.onDestroy();
+         super.onDestroy();
+        try {
+            connectedThread.cancel();
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        try {
+            connectThread.cancel();
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        try {
+            unregisterReceiver(searchDevicesReceiver);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+
     }
+
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
@@ -123,6 +178,7 @@ public class BluetoothClient extends Activity {
                 }
         }
     }
+
 
     private class ConnectThread extends Thread {
         private BluetoothSocket clientsocket;
@@ -150,6 +206,7 @@ public class BluetoothClient extends Activity {
                     clientsocket.close();
                 } catch (IOException e2) {
                     e.printStackTrace();
+                    
                 }
 
             }
@@ -163,6 +220,7 @@ public class BluetoothClient extends Activity {
             } catch (IOException e) {
                e.printStackTrace();
             }
+            if (dialog!=null) dialog.dismiss();
         }
     }
 
@@ -201,11 +259,19 @@ public class BluetoothClient extends Activity {
 
         public void run() {
 
+            Message msg = new Message();
             try {
-                write("PRUEBA DE PASAR BYTES".getBytes("UTF-8"));
+                write(writeXML.getBytes("UTF-8"));
+                msg.obj =writeXML;
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
+                msg.obj="Error";
+
             }
+
+            handler.sendMessage(msg);
+            dialog.dismiss();
+
         }
 
         public void write(byte[] buffer) {
@@ -223,10 +289,13 @@ public class BluetoothClient extends Activity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            if (dialog!=null) dialog.dismiss();
         }
     }
 
     private void searchDevices(){
+
+
 
         Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
         discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, MAX_TIME_TO_DISCOVERY);
@@ -246,6 +315,8 @@ public class BluetoothClient extends Activity {
 
         builderdevicesdialog.setAdapter(adapterdialog, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int item) {
+
+                BluetoothClient.this.dialog.show();
 
                 BluetoothDevice device = devicesfound.get(item);
 
